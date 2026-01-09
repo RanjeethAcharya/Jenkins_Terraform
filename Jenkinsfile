@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         // You can set environment variables here or in the Jenkins UI
-        // AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
-        // AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         TF_IN_AUTOMATION = 'true'
     }
 
@@ -43,3 +43,4 @@ pipeline {
         }
     }
 }
+
