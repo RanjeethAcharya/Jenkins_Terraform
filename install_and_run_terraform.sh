@@ -25,8 +25,14 @@ curl -O "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform
 echo "Unzipping Terraform..."
 if command -v unzip >/dev/null 2>&1; then
     unzip -o "terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
+elif command -v python3 >/dev/null 2>&1; then
+    echo "unzip not found, using python3..."
+    python3 -c "import zipfile; import sys; zipfile.ZipFile(sys.argv[1]).extractall('.')" "terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
+elif command -v python >/dev/null 2>&1; then
+    echo "unzip not found, using python..."
+    python -c "import zipfile; import sys; zipfile.ZipFile(sys.argv[1]).extractall('.')" "terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
 else
-    echo "Error: 'unzip' command not found. Please ensure unzip is installed on the agent."
+    echo "Error: Neither 'unzip', 'python3', nor 'python' found. Cannot extract Terraform."
     exit 1
 fi
 
