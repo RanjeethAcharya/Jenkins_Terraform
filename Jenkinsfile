@@ -19,10 +19,20 @@ pipeline {
 
         stage('Install and Run Terraform') {
             steps {
-                // Ensure the script is executable
-                sh 'chmod +x ./install_and_run_terraform.sh'
-                // Run the script
-                sh './install_and_run_terraform.sh'
+                script {
+                    // Check if terraform is globally available
+                    def exists = sh(script: 'command -v terraform', returnStatus: true) == 0
+                    if (!exists) {
+                        echo "Terraform not found. Proceeding with installation..."
+                        // Ensure the script is executable
+                        sh 'chmod +x ./install_and_run_terraform.sh'
+                        // Run the script
+                        sh './install_and_run_terraform.sh'
+                    } else {
+                        echo "Terraform is already installed. Skipping installation script."
+                        sh 'terraform --version'
+                    }
+                }
             }
         }
 
