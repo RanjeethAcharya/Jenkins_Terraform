@@ -1,55 +1,40 @@
 #!/bin/bash
 set -e
 
-# Script to install Terraform via HashiCorp Official Repositories
-# Requires sudo privileges
+# Script to install Terraform locally (no sudo required)
+# Installs version 1.14.3
 
-echo "Starting Terraform installation via HashiCorp apt repo..."
+TERRAFORM_VERSION="1.14.3"
 
-# Check if running as root or with sudo
-if [ "$EUID" -ne 0 ] && ! command -v sudo &> /dev/null; then
-    echo "Error: This script requires root privileges or sudo to install packages."
+echo "Detecting architecture..."
+ARCH=$(uname -m)
+if [ "$ARCH" = "x86_64" ]; then
+    TF_ARCH="amd64"
+elif [ "$ARCH" = "aarch64" ]; then
+    TF_ARCH="arm64"
+else
+    echo "Unix architecture $ARCH not explicitly supported by this script (assuming amd64)."
+    TF_ARCH="amd64"
+fi
+
+echo "Detected architecture: $TF_ARCH"
+
+echo "Downloading Terraform v${TERRAFORM_VERSION}..."
+curl -O "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
+
+echo "Unzipping Terraform..."
+if command -v unzip >/dev/null 2>&1; then
+    unzip -o "terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
+else
+    echo "Error: 'unzip' command not found. Please ensure unzip is installed on the agent."
     exit 1
 fi
 
-# Function to run with sudo if needed
-run_sudo() {
-    if [ "$EUID" -ne 0 ]; then
-        sudo "$@"
-    else
-        "$@"
-    fi
-}
+echo "Cleaning up zip file..."
+rm "terraform_${TERRAFORM_VERSION}_linux_${TF_ARCH}.zip"
 
-echo "Updating package list and installing dependencies..."
-run_sudo apt-get update
-run_sudo apt-get install -y gnupg software-properties-common curl wget lsb-release
+echo "Making terraform executable..."
+chmod +x terraform
 
-echo "Adding HashiCorp GPG key..."
-wget -O- https://apt.releases.hashicorp.com/gpg | \
-gpg --dearmor | \
-run_sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-
-echo "Verifying GPG key fingerprint..."
-gpg --no-default-keyring \
---keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg \
---fingerprint
-
-echo "Adding HashiCorp repository..."
-# Determine OS release safely
-if [ -f /etc/os-release ]; then
-    UBUNTU_CODENAME=$(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || echo "")
-fi
-
-if [ -z "$UBUNTU_CODENAME" ]; then
-    UBUNTU_CODENAME=$(lsb_release -cs)
-fi
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${UBUNTU_CODENAME} main" | run_sudo tee /etc/apt/sources.list.d/hashicorp.list
-
-echo "Installing Terraform..."
-run_sudo apt-get update
-run_sudo apt-get install -y terraform
-
-echo "Terraform installation complete."
-terraform --version
+echo "Terraform installation complete. Local version:"
+./terraform --version
