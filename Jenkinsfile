@@ -6,6 +6,8 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         TF_IN_AUTOMATION = 'true'
+        // Ensure local tools (like ./terraform) are found in PATH for subsequent stages
+        PATH = "${WORKSPACE}:${env.PATH}"
     }
 
     stages {
